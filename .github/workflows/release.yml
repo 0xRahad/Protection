@@ -34,7 +34,7 @@ jobs:
       - name: Zip Linux build files
         run: |
           cd build/linux/x64/release/bundle
-          zip -r ../../../../../linux-build.zip .
+          zip -r ../../../linux-build.zip .
 
       - name: Create GitHub Release
         id: create_release
@@ -47,12 +47,3 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: linux-build.zip
-          asset_name: linux-build.zip
-          asset_content_type: application/zip
