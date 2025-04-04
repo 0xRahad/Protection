@@ -1,82 +1,39 @@
-name: Flutter Desktop CI/CD
+name: Build Flutter Linux Release
 
 on:
   push:
-    tags:
-      - "v*" # Triggers on tags like v1.0.0
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+  build_linux:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Setup Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.16.5"
           channel: "stable"
-
-      - name: Enable Desktop Support
-        run: flutter config --enable-linux-desktop --enable-windows-desktop
+          flutter-version: "3.x" # Specify your desired Flutter version
 
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build Windows Release
-        if: matrix.os == 'windows-latest'
-        run: flutter build windows --release
+      - name: Analyze code
+        run: flutter analyze --fatal-infos
 
-      - name: Build Linux Release
-        if: matrix.os == 'ubuntu-latest'
-        run: flutter build linux --release
+      - name: Run tests
+        run: flutter test
 
-      - name: Upload Windows Artifact
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v3
-        with:
-          name: windows-release
-          path: build/windows/runner/Release/
+      - name: Build Linux release
+        run: |
+          flutter build linux --release
 
-      - name: Upload Linux Artifact
-        if: matrix.os == 'ubuntu-latest'
+      - name: Upload Linux build artifact
         uses: actions/upload-artifact@v3
         with:
           name: linux-release
-          path: build/linux/x64/release/bundle/
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-      - name: Download All Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: artifacts
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: Release ${{ github.ref_name }}
-          tag_name: ${{ github.ref_name }}
-          body: |
-            🚀 Release build includes:
-            - ✅ Windows (EXE)
-            - ✅ Linux (AppImage or bundle)
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-
-      - name: Upload Release Files
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            artifacts/windows-release/**
-            artifacts/linux-release/**
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          path: build/linux/x64/release/bundle
