@@ -64,7 +64,7 @@ jobs:
             - Windows ✅
             - Linux ✅
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
       - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1
@@ -74,4 +74,4 @@ jobs:
             artifacts/**/AppImage
             artifacts/**/bundle/**/*
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
