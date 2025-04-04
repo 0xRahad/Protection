@@ -25,8 +25,28 @@ jobs:
       - name: Build Linux release
         run: flutter build linux --release
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
+      - name: Zip build/linux/x64/release/bundle files (without directory structure)
+        run: |
+          cd build/web
+          zip -r ../../build.zip .  # Zip only the contents of build/web
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }} # Use your Personal Access Token here
         with:
-          name: Releases
-          path: build/linux/x64/release/bundle
+          tag_name: ${{ github.ref_name }} # Use the pushed tag as the release tag
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }} # Use your Personal Access Token here
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # Fix missing upload_url
+          asset_path: build.zip
+          asset_name: build.zip
+          asset_content_type: application/zip
