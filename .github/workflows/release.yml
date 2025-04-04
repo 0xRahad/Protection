@@ -1,4 +1,4 @@
-name: Deploy Flutter Web to VPS
+name: Deploy Flutter Linux to GitHub Release
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - "v*"
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,8 +16,14 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.29.0" # Specify a Flutter version
+          flutter-version: "3.29.0"
           channel: "stable"
+
+      - name: Install required system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libblkid-dev liblzma-dev
+
+      - name: Enable desktop support
+        run: flutter config --enable-linux-desktop
 
       - name: Install dependencies
         run: flutter pub get
@@ -25,18 +31,18 @@ jobs:
       - name: Build Linux release
         run: flutter build linux --release
 
-      - name: Zip build/linux/x64/release/bundle files (without directory structure)
+      - name: Zip Linux build files
         run: |
-          cd build/web
-          zip -r ../../build.zip .  # Zip only the contents of build/web
+          cd build/linux/x64/release/bundle
+          zip -r ../../../linux-build.zip .
 
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }} # Use your Personal Access Token here
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
-          tag_name: ${{ github.ref_name }} # Use the pushed tag as the release tag
+          tag_name: ${{ github.ref_name }}
           release_name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
@@ -44,9 +50,9 @@ jobs:
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }} # Use your Personal Access Token here
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # Fix missing upload_url
-          asset_path: build.zip
-          asset_name: build.zip
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/linux-build.zip
+          asset_name: linux-build.zip
           asset_content_type: application/zip
