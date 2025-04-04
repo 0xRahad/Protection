@@ -2,9 +2,8 @@ name: Build Flutter Linux Release
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+    tags:
+      - "v*" # Trigger only when pushing a tag starting with "v"
 
 jobs:
   build_linux:
