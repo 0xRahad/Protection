@@ -1,0 +1,76 @@
+name: Flutter Desktop CI/CD
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on tags like v1.0.0
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest] # Build for both Linux and Windows
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+
+      - name: Enable desktop support
+        run: flutter config --enable-linux-desktop --enable-windows-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Windows Release
+        if: matrix.os == 'windows-latest'
+        run: flutter build windows --release
+
+      - name: Build Linux Release
+        if: matrix.os == 'ubuntu-latest'
+        run: flutter build linux --release
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.os }}-release
+          path: |
+            build/windows/runner/Release/
+            build/linux/x64/release/bundle/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          body: |
+            🆕 New release build for:
+            - Windows ✅
+            - Linux ✅
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload binaries to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/**/*.exe
+            artifacts/**/AppImage
+            artifacts/**/bundle/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
