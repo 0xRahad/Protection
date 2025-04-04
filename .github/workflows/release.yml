@@ -3,7 +3,7 @@ name: Flutter Desktop CI/CD
 on:
   push:
     tags:
-      - 'v*' # Triggers on tags like v1.0.0
+      - "v*" # Triggers on tags like v1.0.0
 
 jobs:
   build:
@@ -19,7 +19,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: "3.x" # Specify a Flutter version
+          channel: "stable"
 
       - name: Enable desktop support
         run: flutter config --enable-linux-desktop --enable-windows-desktop
